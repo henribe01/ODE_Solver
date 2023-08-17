@@ -52,7 +52,7 @@ if __name__ == '__main__':
     ax.set_title('Comparison of ODE solving methods')
 
     # Plot Scipy's odeint method for comparison
-    t_end = 10
+    t_end = 5
     t_resolution = 1000
     t = np.linspace(0, t_end, t_resolution)
     x_scipy = odeint(dxdt, ode.x_0, t)
@@ -62,14 +62,11 @@ if __name__ == '__main__':
     # Variables for calculating the mean squared error
     stepsize = 0.1
     t_with_steps = np.linspace(0, t_end, int(t_end / stepsize) + 1)
-    x_scipy_with_steps = odeint(dxdt, ode.x_0, t_with_steps)
+    x_scipy_with_steps = odeint(dxdt, ode.x_0, t_with_steps).flatten().tolist()
 
-    # Plot all methods
-    stepsize = 0.1
     for method in methods:
         # Calculate x values for each method
         x = getattr(ode, method)(t_end, stepsize)
-
         # Calculate mean squared error
         mse_value = mse(x, x_scipy_with_steps)
 
@@ -82,5 +79,7 @@ if __name__ == '__main__':
         ax.scatter(t_steps, x, color=method_colors[method], s=10, zorder=3,
                    alpha=0.5, marker='s')
 
-    ax.legend()
+    leg = ax.legend(loc='upper left')
+    leg.set_draggable(True)
+    leg.set_alpha(0.5)
     plt.show()

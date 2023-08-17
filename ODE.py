@@ -18,7 +18,7 @@ class FirstOrderODE:
 
     def euler(self, t_end: float, stepsize: float) -> list[float]:
         """
-        Implementation of the Euler method for solving ODEs
+        Implementation of the Euler method for solving ODEs \n
         Source: https://en.wikipedia.org/wiki/Euler_method
         :param t_end: Value of t at which to stop
         :param stepsize: Step size
@@ -48,8 +48,38 @@ class FirstOrderODE:
         results = [self.x_0]
         while t_n + TOL < t_end:
             x_intermediate = x_n + stepsize * self.f(x_n, t_n)
-            x_n += stepsize / 2 * (self.f(x_n, t_n) + self.f(x_intermediate, t_next))
+            x_n += stepsize / 2 * (
+                    self.f(x_n, t_n) + self.f(x_intermediate, t_next))
             t_n += stepsize
             t_next += stepsize
+            results.append(x_n)
+        return results
+
+    def runge_kutta_4(self, t_end: float, stepsize: float) -> list[float]:
+        """
+        Implementation of the Runge Kutta method for solving ODEs \n
+        Source: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+        :param t_end: Value of t at which to stop
+        :param stepsize: Step size
+        :return: List of x values at steps h, 2h, 3h, ..., t_end
+        """
+
+        # Define functions for readability
+        def calc_k_values(x_n: float, t_n: float) -> list[float]:
+            k_1 = self.f(x_n, t_n)
+            k_2 = self.f(x_n + stepsize / 2 * k_1, t_n + stepsize / 2)
+            k_3 = self.f(x_n + stepsize / 2 * k_2, t_n + stepsize / 2)
+            k_4 = self.f(x_n + stepsize * k_3, t_n + stepsize)
+            return [k_1, k_2, k_3, k_4]
+
+        x_n = self.x_0
+        t_n = self.t_0
+        results = [self.x_0]
+
+        while t_n + TOL < t_end:
+            k_vals = calc_k_values(x_n, t_n)
+            x_n += stepsize / 6 * (
+                    k_vals[0] + 2 * k_vals[1] + 2 * k_vals[2] + k_vals[3])
+            t_n += stepsize
             results.append(x_n)
         return results
