@@ -3,61 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 import matplotlib
+from ODE import FirstOrderODE
 
 matplotlib.use('TkAgg')
 
 plt.style.use('seaborn-v0_8')
-
-
-def euler(x_0: float, t_0: float, t_end: float, h: float, dxdt: Callable) -> \
-        list[float]:
-    """
-    Implementation of the Euler method for solving ODEs
-    Source: https://en.wikipedia.org/wiki/Euler_method
-    :param x_0: Initial value of x
-    :param t_0: Initial value of t
-    :param t_end: Value of t at which to stop
-    :param h: Step size
-    :param dxdt: Function that returns the derivative of x at a given x and t
-    -> Right hand side of the ODE
-    :return: List of x values at steps h, 2h, 3h, ..., t_end
-    """
-    x_n = x_0
-    t_n = t_0
-    results = [x_0]
-    # Tolerance for floating point errors
-    while t_n + 1e-6 < t_end:
-        x_n += h * dxdt(x_n, t_n)
-        t_n += h
-        results.append(x_n)
-    return results
-
-
-def heun(x_0: float, t_0: float, t_end: float, h: float, dxdt: Callable) -> \
-        list[float]:
-    """
-    Implementation of the Heun method for solving ODEs
-    Source: https://en.wikipedia.org/wiki/Heun%27s_method
-    :param x_0: Initial value of x
-    :param t_0: Initial value of t
-    :param t_end: Value of t at which to stop
-    :param h: Step size
-    :param dxdt: Function that returns the derivative of x at a given x and t
-    -> Right hand side of the ODE
-    :return: List of x values at steps h, 2h, 3h, ..., t_end
-    """
-    x_n = x_0
-    t_n = t_0
-    t_next = t_0 + h
-    intermediate_x = 0
-    results = [x_0]
-    while t_n + 1e-6 < t_end:
-        intermediate_x = x_n + h * dxdt(x_n, t_n)
-        x_n += h / 2 * (dxdt(x_n, t_n) + dxdt(intermediate_x, t_next))
-        t_n += h
-        t_next += h
-        results.append(x_n)
-    return results
 
 
 def dxdt(x: float, t: float) -> float:
@@ -81,33 +31,56 @@ def mse(x: list[float], y: list[float]) -> float:
 
 
 if __name__ == '__main__':
-    x_0 = 1
-    t_0 = 0
-    t_end = 4
-    step_size = 1
-    integration_methods = {'Euler': euler, 'Heun': heun}
-    colors = {'Euler': 'red', 'Heun': 'blue'}
+    # List of all ODE solving methods
+    methods = [method for method in dir(FirstOrderODE) if
+               not method.startswith('__')]
+    colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink',
+              'gray', 'olive', 'cyan']
+    method_colors = dict(zip(methods, colors))
+    print(
+        f'Available methods: {", ".join(method.capitalize() for method in methods)}')
 
-    # Set up figure
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    # Set up ODE
+    ode = FirstOrderODE(dxdt, 1, 0)
+
+    # Set up plot
+    fig, ax = plt.subplots()
+    fig: plt.Figure
+    ax: plt.Axes
     ax.set_xlabel('t')
     ax.set_ylabel('x')
+    ax.set_title('Comparison of ODE solving methods')
 
-    # Plot scipy solution for comparison
-    t = np.linspace(t_0, t_end, 1000)
-    x_exact = odeint(dxdt, x_0, t).reshape(-1).tolist()
-    t_with_steps = np.linspace(t_0, t_end, int((t_end - t_0) / step_size) + 1)
-    x_scipy_with_steps = odeint(dxdt, x_0, t_with_steps).reshape(-1).tolist()
-    ax.plot(t, x_exact, label='Exact solution')
+    # Plot Scipy's odeint method for comparison
+    t_end = 10
+    t_resolution = 1000
+    t = np.linspace(0, t_end, t_resolution)
+    x_scipy = odeint(dxdt, ode.x_0, t)
+    ax.plot(t, x_scipy, label='Scipy odeint', color='black', linewidth=2,
+            zorder=0, linestyle='--')
 
-    # Plot Integration methods
-    for method_name, method in integration_methods.items():
-        x = method(x_0, t_0, t_end, step_size, dxdt)
+    # Variables for calculating the mean squared error
+    stepsize = 0.1
+    t_with_steps = np.linspace(0, t_end, int(t_end / stepsize) + 1)
+    x_scipy_with_steps = odeint(dxdt, ode.x_0, t_with_steps)
+
+    # Plot all methods
+    stepsize = 0.1
+    for method in methods:
+        # Calculate x values for each method
+        x = getattr(ode, method)(t_end, stepsize)
+
+        # Calculate mean squared error
         mse_value = mse(x, x_scipy_with_steps)
-        ax.plot(t_with_steps, x,
-                label=f'{method_name} method, MSE: {mse_value:.2e}',
-                color=colors[method_name])
-        ax.scatter(t_with_steps, x, color=colors[method_name])
+
+        # Plot x values
+        t_steps = np.linspace(0, t_end, len(x))
+        ax.plot(t_steps, x,
+                label=f'{method.capitalize()} ({mse_value:.2e})',
+                color=method_colors[method],
+                zorder=2, alpha=0.5)
+        ax.scatter(t_steps, x, color=method_colors[method], s=10, zorder=3,
+                   alpha=0.5, marker='s')
 
     ax.legend()
     plt.show()
