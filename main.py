@@ -32,6 +32,10 @@ def d2xdt2(x: float, x_dot: float, t: float) -> float:
     return -np.sin(x)
 
 
+def d3xdt3(x: float, x_dot: float, x_dot_dot: float, t: float) -> float:
+    return -np.cos(x)
+
+
 def mse(x: list[float], y: list[float]) -> float:
     """
     Calculates the mean squared error between two lists of floats
@@ -63,29 +67,42 @@ if __name__ == '__main__':
     # Set up variables
     t_end = 10
     t_0 = 0
-    inital_values = [1, 0]
     stepsize = 0.1
     t_res = 1000
+    equation = d2xdt2
+    possible_equations_inital_values = {
+        dxdt: [1],
+        d2xdt2: [1, 0],
+        d3xdt3: [1, 0, 0]
+    }
+    inital_values = possible_equations_inital_values[equation]
 
     # Set up scipy
     t_scipy = np.linspace(t_0, t_end, t_res)
+
+
     def f_scipy(u, t):
-        return (u[1], d2xdt2(u[0], u[1], t))
+        args = [u[i] for i in range(len(u))]
+        return *(args[1:]), equation(*args, t)
+
+
     x_scipy = odeint(f_scipy, inital_values, t_scipy)
     ax.plot(t_scipy, x_scipy[:, 0], label='Scipy', color='black', zorder=1)
 
     # Set up ODE
-    ode = ODE(d2xdt2, inital_values, t_0)
+    ode = ODE(equation, inital_values, t_0)
 
     for method in methods:
         # Calculate x values for each method
         t_steps, x = getattr(ode, method)(t_end, stepsize)
         # Calculate mean squared error
-        # mse_value = mse(x, x_scipy_with_steps)
+        mse_value = mse(x, x_scipy[::int(t_res / len(x)), 0])
+        print(f'{method.capitalize()} MSE: {mse_value}')
+        print(t_steps, x)
 
         # Plot x values
         ax.plot(t_steps, x,
-                label=f'{method.capitalize()}',
+                label=f'{method.capitalize()} (MSE: {mse_value:.2e})',
                 color=method_colors[method],
                 zorder=2, alpha=0.5)
         ax.scatter(t_steps, x, color=method_colors[method], s=10, zorder=3,

@@ -18,65 +18,38 @@ class ODE:
         self.t_0 = t_0
         self.order = len(initial_values)
 
-
     def euler(self, t_end: float, step_size: float) -> tuple[
         list[float], list[float]]:
-        """
-        Solves the ODE using Euler's method \n
-        Source: https://en.wikipedia.org/wiki/Euler_method
-        :param t_end: Time to stop calculation at
-        :param step_size: Step size
-        :return: Tuple of lists of t and x values
-        """
-        t = [self.t_0]
-        x = [self.initial_values[0]]
-        derivatives = self.initial_values.copy()
-        while t[-1] < t_end:
-            xn_next = derivatives[-1] + step_size * self.f(*derivatives, t[-1])
-            for i in range(self.order - 1):
-                derivatives[i] += step_size * derivatives[i + 1]
-            derivatives[-1] = xn_next
-            t.append(t[-1] + step_size)
-            x.append(derivatives[0])
-        return t, x
+        t_values = np.linspace(self.t_0, t_end,
+                               int((t_end - self.t_0) / step_size))
+        x_values = np.zeros_like(t_values)
+        x_values[0] = self.initial_values[0]
+        derivatives_vector = np.array(self.initial_values, dtype=float)
 
+        for i in range(1, len(t_values)):
+            derivatives_vector[:-1] += step_size * derivatives_vector[1:]
+            derivatives_vector[-1] += step_size * self.f(*derivatives_vector,
+                                                         t_values[i - 1])
+            x_values[i] = derivatives_vector[0]
+        return t_values.tolist(), x_values.tolist()
 
     def heun(self, t_end: float, step_size: float) -> tuple[
         list[float], list[float]]:
-        """
-        Solves the ODE using Heun's method \n
-        Source: https://en.wikipedia.org/wiki/Heun%27s_method
-        :param t_end: Time to stop calculation at
-        :param step_size: Step size
-        :return: Tuple of lists of t and x values
-        """
-        # intermediate+1 = x + step_size * x'
-        # intermediate'+1 = x' + step_size * x''
-        # ...
-        # intermediate^(n)+1 = x^(n) + step_size * f(x, x', ..., x^(n), t)
+        t_values = np.linspace(self.t_0, t_end,
+                               int((t_end - self.t_0) / step_size))
+        x_values = np.zeros_like(t_values)
+        x_values[0] = self.initial_values[0]
+        derivatives_vector = np.array(self.initial_values, dtype=float)
+        predictor_vector = np.array(self.initial_values, dtype=float)
 
-        # x+1 = x + 0.5 * step_size * (x'(t) + intermediate+1)
-        # x'+1 = x' + 0.5 * step_size * (x''(t) + intermediate'+1)
-        # ...
-        # x^(n)+1 = x^(n) + 0.5 * step_size * (f(x, x', ..., x^(n), t) + intermediate^(n)+1)
-
-        t = [self.t_0]
-        x = [self.initial_values[0]]
-        derivatives = self.initial_values.copy()
-        predictor = self.initial_values.copy()
-        while t[-1] < t_end:
-            pred_last = predictor[-1] + step_size * self.f(*derivatives, t[-1])
-            for i in range(self.order - 1):
-                predictor[i] += step_size * derivatives[i + 1]
-            predictor[-1] = pred_last
-
-            xn_next = derivatives[-1] + 0.5 * step_size * (
-                    self.f(*derivatives, t[-1]) + self.f(*predictor,
-                                                         t[-1] + step_size))
-            for i in range(self.order - 1):
-                derivatives[i] += 0.5 * step_size * (
-                        derivatives[i + 1] + predictor[i + 1])
-            derivatives[-1] = xn_next
-            t.append(t[-1] + step_size)
-            x.append(derivatives[0])
-        return t, x
+        for i in range(1, len(t_values)):
+            predictor_vector[:-1] += step_size * derivatives_vector[1:]
+            predictor_vector[-1] += step_size * self.f(*derivatives_vector,
+                                                       t_values[i - 1])
+            derivatives_vector[:-1] += 0.5 * step_size * (
+                    derivatives_vector[1:] + predictor_vector[1:])
+            derivatives_vector[-1] += 0.5 * step_size * (
+                    self.f(*derivatives_vector, t_values[i - 1]) + self.f(
+                *predictor_vector, t_values[i]))
+            x_values[i] = derivatives_vector[0]
+        return t_values.tolist(), x_values.tolist()
