@@ -93,6 +93,7 @@ if __name__ == '__main__':
     ode = ODE(equation, inital_values, t_0)
 
     for method in methods:
+        # TODO: Measure time taken for each method
         # Calculate x values for each method
         t_steps, x = getattr(ode, method)(t_end, stepsize)
         # Calculate mean squared error
@@ -118,3 +119,8 @@ if __name__ == '__main__':
     leg.set_draggable(True)
     leg.set_alpha(0.5)
     plt.show()
+
+    # TODO: Add Phase plot for d2xdt2 with vector field
+    # TODO: Animate Phase Plot
+    # TODO: Make example file for simple pendulum with animation and phase plot etc.
+    # TODO: Add more ODE solving methods
