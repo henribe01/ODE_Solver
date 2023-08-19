@@ -1,85 +1,82 @@
 from typing import Callable
+import numpy as np
 
-TOL = 1e-6
 
-
-class FirstOrderODE:
-    def __init__(self, f: Callable[[float, float], float],
-                 x_0: float, t_0: float):
+class ODE:
+    def __init__(self, f: Callable[[float, ..., float], float],
+                 initial_values: list[float], t_0: float) -> None:
         """
-        :param f: Function that returns the derivative of x at a given x and t
-        -> Right hand side of the ODE dx/dt = f(x, t)
-        :param x_0: Initial value of x -> x(t_0)
-        :param t_0: Initial value of t
+        :param f: Function that returns the nth derivative of x at a
+        given x, x', ..., x^(n-1), t
+        -> Right hand side of the ODE d^n x/dt^n = f(x, x', ..., x^(n-1), t)
+        :param initial_values: List of initial values of x(t_0), x'(t_0), ...,
+        x^(n-1)(t_0)
+        :param t_0: Initial time
         """
         self.f = f
-        self.x_0 = x_0
+        self.initial_values = initial_values
         self.t_0 = t_0
+        self.order = len(initial_values)
 
-    def euler(self, t_end: float, stepsize: float) -> list[float]:
+
+    def euler(self, t_end: float, step_size: float) -> tuple[
+        list[float], list[float]]:
         """
-        Implementation of the Euler method for solving ODEs \n
+        Solves the ODE using Euler's method \n
         Source: https://en.wikipedia.org/wiki/Euler_method
-        :param t_end: Value of t at which to stop
-        :param stepsize: Step size
-        :return: List of x values at steps h, 2h, 3h, ..., t_end
+        :param t_end: Time to stop calculation at
+        :param step_size: Step size
+        :return: Tuple of lists of t and x values
         """
-        x_n = self.x_0
-        t_n = self.t_0
-        results = [self.x_0]
-        # Add tolerance for floating point errors
-        while t_n + TOL < t_end:
-            x_n += stepsize * self.f(x_n, t_n)
-            t_n += stepsize
-            results.append(x_n)
-        return results
+        t = [self.t_0]
+        x = [self.initial_values[0]]
+        derivatives = self.initial_values.copy()
+        while t[-1] < t_end:
+            xn_next = derivatives[-1] + step_size * self.f(*derivatives, t[-1])
+            for i in range(self.order - 1):
+                derivatives[i] += step_size * derivatives[i + 1]
+            derivatives[-1] = xn_next
+            t.append(t[-1] + step_size)
+            x.append(derivatives[0])
+        return t, x
 
-    def heun(self, t_end: float, stepsize: float) -> list[float]:
+
+    def heun(self, t_end: float, step_size: float) -> tuple[
+        list[float], list[float]]:
         """
-        Implementation of the Heun method for solving ODEs
+        Solves the ODE using Heun's method \n
         Source: https://en.wikipedia.org/wiki/Heun%27s_method
-        :param t_end: Value of t at which to stop
-        :param stepsize: Step size
-        :return: List of x values at steps h, 2h, 3h, ..., t_end
+        :param t_end: Time to stop calculation at
+        :param step_size: Step size
+        :return: Tuple of lists of t and x values
         """
-        x_n = self.x_0
-        t_n = self.t_0
-        t_next = self.t_0 + stepsize
-        results = [self.x_0]
-        while t_n + TOL < t_end:
-            x_intermediate = x_n + stepsize * self.f(x_n, t_n)
-            x_n += stepsize / 2 * (
-                    self.f(x_n, t_n) + self.f(x_intermediate, t_next))
-            t_n += stepsize
-            t_next += stepsize
-            results.append(x_n)
-        return results
+        # intermediate+1 = x + step_size * x'
+        # intermediate'+1 = x' + step_size * x''
+        # ...
+        # intermediate^(n)+1 = x^(n) + step_size * f(x, x', ..., x^(n), t)
 
-    def runge_kutta_4(self, t_end: float, stepsize: float) -> list[float]:
-        """
-        Implementation of the Runge Kutta method for solving ODEs \n
-        Source: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
-        :param t_end: Value of t at which to stop
-        :param stepsize: Step size
-        :return: List of x values at steps h, 2h, 3h, ..., t_end
-        """
+        # x+1 = x + 0.5 * step_size * (x'(t) + intermediate+1)
+        # x'+1 = x' + 0.5 * step_size * (x''(t) + intermediate'+1)
+        # ...
+        # x^(n)+1 = x^(n) + 0.5 * step_size * (f(x, x', ..., x^(n), t) + intermediate^(n)+1)
 
-        # Define functions for readability
-        def calc_k_values(x_n: float, t_n: float) -> list[float]:
-            k_1 = self.f(x_n, t_n)
-            k_2 = self.f(x_n + stepsize / 2 * k_1, t_n + stepsize / 2)
-            k_3 = self.f(x_n + stepsize / 2 * k_2, t_n + stepsize / 2)
-            k_4 = self.f(x_n + stepsize * k_3, t_n + stepsize)
-            return [k_1, k_2, k_3, k_4]
+        t = [self.t_0]
+        x = [self.initial_values[0]]
+        derivatives = self.initial_values.copy()
+        predictor = self.initial_values.copy()
+        while t[-1] < t_end:
+            pred_last = predictor[-1] + step_size * self.f(*derivatives, t[-1])
+            for i in range(self.order - 1):
+                predictor[i] += step_size * derivatives[i + 1]
+            predictor[-1] = pred_last
 
-        x_n = self.x_0
-        t_n = self.t_0
-        results = [self.x_0]
-
-        while t_n + TOL < t_end:
-            k_vals = calc_k_values(x_n, t_n)
-            x_n += stepsize / 6 * (
-                    k_vals[0] + 2 * k_vals[1] + 2 * k_vals[2] + k_vals[3])
-            t_n += stepsize
-            results.append(x_n)
-        return results
+            xn_next = derivatives[-1] + 0.5 * step_size * (
+                    self.f(*derivatives, t[-1]) + self.f(*predictor,
+                                                         t[-1] + step_size))
+            for i in range(self.order - 1):
+                derivatives[i] += 0.5 * step_size * (
+                        derivatives[i + 1] + predictor[i + 1])
+            derivatives[-1] = xn_next
+            t.append(t[-1] + step_size)
+            x.append(derivatives[0])
+        return t, x
