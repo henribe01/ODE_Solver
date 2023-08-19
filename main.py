@@ -33,7 +33,7 @@ def d2xdt2(x: float, x_dot: float, t: float) -> float:
 
 
 def d3xdt3(x: float, x_dot: float, x_dot_dot: float, t: float) -> float:
-    return -np.cos(x)
+    return -4 * x_dot_dot - 6 * x_dot - 4 * x
 
 
 def mse(x: list[float], y: list[float]) -> float:
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     t_0 = 0
     stepsize = 0.1
     t_res = 1000
-    equation = d2xdt2
+    equation = d3xdt3
     possible_equations_inital_values = {
         dxdt: [1],
         d2xdt2: [1, 0],
@@ -99,6 +99,12 @@ if __name__ == '__main__':
         mse_value = mse(x, x_scipy[::int(t_res / len(x)), 0])
         print(f'{method.capitalize()} MSE: {mse_value}')
         print(t_steps, x)
+
+        # Check if method diverged
+        # TODO: Improve divergence check
+        if mse_value > 1e5:
+            print(f'{method.capitalize()} diverged')
+            continue
 
         # Plot x values
         ax.plot(t_steps, x,
