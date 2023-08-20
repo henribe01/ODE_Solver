@@ -120,7 +120,4 @@ if __name__ == '__main__':
     leg.set_alpha(0.5)
     plt.show()
 
-    # TODO: Add Phase plot for d2xdt2 with vector field
-    # TODO: Animate Phase Plot
-    # TODO: Make example file for simple pendulum with animation and phase plot etc.
     # TODO: Add more ODE solving methods

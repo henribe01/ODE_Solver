@@ -45,8 +45,8 @@ class ODE:
         list[float], list[float]]:
         t_values = np.linspace(self.t_0, t_end,
                                int((t_end - self.t_0) / step_size))
-        x_values = np.zeros_like(t_values)
-        x_values[0] = self.initial_values[0]
+        all_derivatives = np.zeros((len(t_values), self.order))
+        all_derivatives[0] = self.initial_values.copy()
         derivatives_vector = np.array(self.initial_values, dtype=float)
         predictor_vector = np.array(self.initial_values, dtype=float)
 
@@ -59,15 +59,15 @@ class ODE:
             derivatives_vector[-1] += 0.5 * step_size * (
                     self.f(*derivatives_vector, t_values[i - 1]) + self.f(
                 *predictor_vector, t_values[i]))
-            x_values[i] = derivatives_vector[0]
-        return t_values.tolist(), x_values.tolist()
+            all_derivatives[i] = derivatives_vector
+        return t_values.tolist(), all_derivatives.T.tolist()
 
     def rk4(self, t_end: float, step_size: float) -> tuple[
         list[float], list[float]]:
         t_values = np.linspace(self.t_0, t_end,
                                int((t_end - self.t_0) / step_size))
-        x_values = np.zeros_like(t_values)
-        x_values[0] = self.initial_values[0]
+        all_derivatives = np.zeros((len(t_values), self.order))
+        all_derivatives[0] = self.initial_values.copy()
         derivatives_vector = np.array(self.initial_values, dtype=float)
         k1 = np.zeros_like(derivatives_vector)
         k2 = np.zeros_like(derivatives_vector)
@@ -89,5 +89,5 @@ class ODE:
             k4[-1] = step_size * self.f(
                 *(derivatives_vector + k3), t_values[i - 1] + step_size)
             derivatives_vector += (k1 + 2 * k2 + 2 * k3 + k4) / 6
-            x_values[i] = derivatives_vector[0]
-        return t_values.tolist(), x_values.tolist()
+            all_derivatives[i] = derivatives_vector
+        return t_values.tolist(), all_derivatives.T.tolist()

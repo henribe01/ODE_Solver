@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     # Plot
     pendulum = Pendulum(l, theta_0, theta_dot_0, damping=damping, speed=speed)
-    pendulum.solve(t_end, step_size)
+    pendulum.solve(t_end, step_size, method='euler')
     pendulum.plot_time(time_ax)
     pendulum.plot_stream_phase_space(phase_ax, phase_limits[0],
                                      phase_limits[1], density=(2, 2))
