@@ -18,12 +18,19 @@ class ODE:
         self.t_0 = t_0
         self.order = len(initial_values)
 
+        # Make sure that the amount of initial values is equal to the order of
+        # the ODE
+        if len(initial_values) != self.order:
+            raise ValueError(
+                f'Amount of initial values ({len(initial_values)}) does not '
+                f'match order of ODE ({self.order})')
+
     def euler(self, t_end: float, step_size: float) -> tuple[
         list[float], list[float]]:
         t_values = np.linspace(self.t_0, t_end,
                                int((t_end - self.t_0) / step_size))
         all_derivatives = np.zeros((len(t_values), self.order))
-        all_derivatives[0] = self.initial_values
+        all_derivatives[0] = self.initial_values.copy()
         derivatives_vector = np.array(self.initial_values, dtype=float)
 
         for i in range(1, len(t_values)):
@@ -31,8 +38,8 @@ class ODE:
             derivatives_vector[-1] += step_size * self.f(*derivatives_vector,
                                                          t_values[i - 1])
             all_derivatives[i] = derivatives_vector
-        return t_values.tolist(), *tuple(all_derivatives[:, i].tolist() for i in
-                                        range(self.order))
+        print(all_derivatives.T.tolist()[0][-1])
+        return t_values.tolist(), all_derivatives.T.tolist()
 
     def heun(self, t_end: float, step_size: float) -> tuple[
         list[float], list[float]]:
