@@ -2,6 +2,7 @@ from typing import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
 
 
 class ODESolverBase:
@@ -70,7 +71,8 @@ class ODESolverBase:
         return self.t_values
 
     def time_plot(self, ax: plt.Axes, n: int = 0, color: str = 'k',
-                  label: str = '') -> plt.Line2D:
+                  label: str = '') -> list[
+        plt.Line2D, matplotlib.collections.PathCollection]:
         """
         Plots the n-th derivative against time.
         :param ax: A matplotlib axes object to plot on.
@@ -81,8 +83,19 @@ class ODESolverBase:
         """
         if label == '':
             label = f'd^{n}x/dt^{n}'
-        return ax.plot(self.t_values, self.get_n_th_derivative(n), color=color,
-                       label=label)[0]
+        line = ax.plot(self.get_t_values(), self.get_n_th_derivative(n),
+                       color=color, label=label, alpha=0.5, zorder=1)[0]
+
+        # If step size is small, only plot the points with distance
+        interval = 1
+        distance = 0.5
+        if self.step_size < distance:
+            interval = int(distance / self.step_size)
+        scatter = ax.scatter(self.get_t_values()[::interval],
+                             self.get_n_th_derivative(n)[::interval],
+                             color=color, alpha=0.5, s=10, marker='s')
+
+        return line, scatter
 
     def phase_plot(self, ax: plt.Axes, n: int = 0, color: str = 'k',
                    label: str = '') -> plt.Line2D:
@@ -114,6 +127,30 @@ class ForwardEuler(ODESolverBase):
         # Calculate new values
         new_values = self.derivative_values[-1] + self.step_size * self.f(
             self.derivative_values[-1], self.t_values[-1])
+
+        # Append new values to the array
+        self.derivative_values = np.append(self.derivative_values,
+                                           [new_values], axis=0)
+        self.t_values = np.append(self.t_values, self.t_values[-1] +
+                                  self.step_size)
+
+
+class Heun(ODESolverBase):
+    def step(self) -> None:
+        """
+        Perform a single step of the solver using the Heun method. \n
+        Source: https://en.wikipedia.org/wiki/Heun%27s_method
+        :return: None
+        """
+        # Calculate intermediate values
+        intermediate_values = self.derivative_values[
+                                  -1] + self.step_size * self.f(
+            self.derivative_values[-1], self.t_values[-1])
+
+        # Calculate new values
+        new_values = self.derivative_values[-1] + self.step_size / 2 * (self.f(
+            self.derivative_values[-1], self.t_values[-1]) + self.f(
+            intermediate_values, self.t_values[-1] + self.step_size))
 
         # Append new values to the array
         self.derivative_values = np.append(self.derivative_values,
