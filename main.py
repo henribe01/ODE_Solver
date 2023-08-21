@@ -29,9 +29,9 @@ if __name__ == '__main__':
     method_colors = dict(zip(methods, colors))
 
     # Solve and plot for each method
-    t_end = 50
+    t_end = 10
     for method in methods:
-        solver = method(simple_ode, [1], 0.01)
+        solver = method(simple_ode, [1], 0.1)
         solver.solve(t_end)
         solver.time_plot(ax, label=method.__name__, color=method_colors[method])
 

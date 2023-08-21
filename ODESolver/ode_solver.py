@@ -24,8 +24,6 @@ class ODESolverBase:
         self.t_values = np.array([0])
         self.derivative_values = np.array([initial_values])  # 2D array
 
-        # Variables for plots
-
     def f(self, y: np.ndarray, t: float) -> np.ndarray:
         """
         Converts a high order ODE to a system of first order ODEs.
@@ -94,7 +92,6 @@ class ODESolverBase:
         scatter = ax.scatter(self.get_t_values()[::interval],
                              self.get_n_th_derivative(n)[::interval],
                              color=color, alpha=0.5, s=10, marker='s')
-
         return line, scatter
 
     def phase_plot(self, ax: plt.Axes, n: int = 0, color: str = 'k',
@@ -151,6 +148,33 @@ class Heun(ODESolverBase):
         new_values = self.derivative_values[-1] + self.step_size / 2 * (self.f(
             self.derivative_values[-1], self.t_values[-1]) + self.f(
             intermediate_values, self.t_values[-1] + self.step_size))
+
+        # Append new values to the array
+        self.derivative_values = np.append(self.derivative_values,
+                                           [new_values], axis=0)
+        self.t_values = np.append(self.t_values, self.t_values[-1] +
+                                  self.step_size)
+
+
+class RK4(ODESolverBase):
+    def step(self) -> None:
+        """
+        Perform a single step of the solver using the RK4 method. \n
+        Source: https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+        :return: None
+        """
+        # Calculate k-values
+        k1 = self.f(self.derivative_values[-1], self.t_values[-1])
+        k2 = self.f(self.derivative_values[-1] + self.step_size / 2 * k1,
+                    self.t_values[-1] + self.step_size / 2)
+        k3 = self.f(self.derivative_values[-1] + self.step_size / 2 * k2,
+                    self.t_values[-1] + self.step_size / 2)
+        k4 = self.f(self.derivative_values[-1] + self.step_size * k3,
+                    self.t_values[-1] + self.step_size)
+
+        # Calculate new values
+        new_values = self.derivative_values[-1] + self.step_size / 6 * (
+                k1 + 2 * k2 + 2 * k3 + k4)
 
         # Append new values to the array
         self.derivative_values = np.append(self.derivative_values,
