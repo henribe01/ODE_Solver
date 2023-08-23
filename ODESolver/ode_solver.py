@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 
+plt.style.use('seaborn-v0_8')
+
 
 class ODESolverBase:
     def __init__(self, equation: Callable[[..., float], float],
@@ -23,6 +25,13 @@ class ODESolverBase:
         # Variables for storing the solution
         self.t_values = np.array([0])
         self.derivative_values = np.array([initial_values])  # 2D array
+
+        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+        methods = self.__class__.__subclasses__()
+        method_colors = {method: colors[i] for i, method in enumerate(methods)}
+        self.color = None
+        if self.__class__ in methods:
+            self.color = method_colors[self.__class__]
 
     def f(self, y: np.ndarray, t: float) -> np.ndarray:
         """
@@ -68,7 +77,7 @@ class ODESolverBase:
         """
         return self.t_values
 
-    def time_plot(self, ax: plt.Axes, n: int = 0, color: str = 'k',
+    def time_plot(self, ax: plt.Axes, n: int = 0,
                   label: str = '') -> list[
         plt.Line2D, matplotlib.collections.PathCollection]:
         """
@@ -80,9 +89,9 @@ class ODESolverBase:
         :return: None
         """
         if label == '':
-            label = f'd^{n}x/dt^{n}'
+            label = f'{self.__class__.__name__.capitalize()}'
         line = ax.plot(self.get_t_values(), self.get_n_th_derivative(n),
-                       color=color, label=label, alpha=0.5, zorder=1)[0]
+                       color=self.color, label=label, alpha=0.5, zorder=1)[0]
 
         # If step size is small, only plot the points with distance
         interval = 1
@@ -91,7 +100,7 @@ class ODESolverBase:
             interval = int(distance / self.step_size)
         scatter = ax.scatter(self.get_t_values()[::interval],
                              self.get_n_th_derivative(n)[::interval],
-                             color=color, alpha=0.5, s=10, marker='s')
+                             color=self.color, alpha=0.5, s=10, marker='s')
         return line, scatter
 
     def phase_plot(self, ax: plt.Axes, n: int = 0, color: str = 'k',
