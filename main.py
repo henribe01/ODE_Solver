@@ -47,11 +47,11 @@ def parse_args(argv):
     parser.add_argument('-t', '--t_end', type=float, default=10,
                         help='Time to solve up to.')
     parser.add_argument('-m', '--methods', type=str, nargs='+',
-                        default=['Forwardeuler', 'Heun', 'Rk4'],
+                        default=['ForwardEuler', 'Heun', 'RK4'],
                         help='Methods to use for solving the ODE.',
-                        choices=[method.__name__.capitalize() for method in
+                        choices=[method.__name__ for method in
                                  ODESolverBase.__subclasses__()])
-    parser.add_argument('-s', '--step_size', type=float, default=0.1,
+    parser.add_argument('-s', '--step_size', type=float, default=0.01,
                         help='Step size to use for solving the ODE.')
     parser.add_argument('-e', '--error', action='store_true',
                         help='Plot error vs step size.')
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         ax1.plot(t_values, scipy_solution, color='red', label='Scipy',
                  linestyle='--', zorder=0)
 
-    methods = {method.__name__.capitalize(): method for method in
+    methods = {method.__name__: method for method in
                ODESolverBase.__subclasses__()}
 
     for method_name in args.methods:

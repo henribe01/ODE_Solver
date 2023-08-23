@@ -190,3 +190,34 @@ class RK4(ODESolverBase):
                                            [new_values], axis=0)
         self.t_values = np.append(self.t_values, self.t_values[-1] +
                                   self.step_size)
+
+
+class TwoStepAdamBashforth(ODESolverBase):
+    def step(self) -> None:
+        """
+        Perform a single step of the solver using the 2-step Adams-Bashforth
+        method. \n
+        Source: https://en.wikipedia.org/wiki/Linear_multistep_method
+        :return: None
+        """
+        # Calculate first two values using Euler's method
+        if len(self.derivative_values) < 2:
+            new_values = self.derivative_values[-1] + self.step_size * self.f(
+                self.derivative_values[-1], self.t_values[-1])
+            self.derivative_values = np.append(self.derivative_values,
+                                               [new_values], axis=0)
+            self.t_values = np.append(self.t_values, self.t_values[-1] +
+                                      self.step_size)
+            return
+        # Calculate new values
+        new_values = self.derivative_values[
+                         -1] + 3 / 2 * self.step_size * self.f(
+            self.derivative_values[-1],
+            self.t_values[-1]) - 1 / 2 * self.step_size * self.f(
+            self.derivative_values[-2], self.t_values[-2])
+
+        # Append new values to the array
+        self.derivative_values = np.append(self.derivative_values,
+                                           [new_values], axis=0)
+        self.t_values = np.append(self.t_values, self.t_values[-1] +
+                                  self.step_size)
