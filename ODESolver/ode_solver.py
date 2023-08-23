@@ -119,6 +119,21 @@ class ODESolverBase:
                        self.get_n_th_derivative(n + 1), color=color,
                        label=label)[0]
 
+    def get_mse(self, scipy_solution: np.ndarray) -> float:
+        """
+        Calculates the mean squared error between the calculated solution and a scipy solution.
+        :param scipy_solution: The scipy solution.
+        :return: The mean squared error.
+        """
+        # Get shortest
+        if len(self.t_values) > len(scipy_solution):
+            length = len(scipy_solution)
+        else:
+            length = len(self.t_values)
+        return 1 / length * np.sum(
+            (self.get_n_th_derivative(0)[:length] - scipy_solution[
+                                                    :length]) ** 2)
+
 
 class ForwardEuler(ODESolverBase):
     def step(self) -> None:

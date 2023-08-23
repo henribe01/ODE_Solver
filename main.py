@@ -1,5 +1,6 @@
 import os
 import sys
+import timeit
 
 import numpy as np
 import argparse
@@ -90,13 +91,23 @@ if __name__ == '__main__':
 
     if args.scipy:
         t_values = np.linspace(0, args.t_end, int(args.t_end / args.step_size))
-        _ode = scipy_ode
-        scipy_solution = odeint(_ode, args.initial_conditions, t_values)[:, 0]
+        scipy_solution = odeint(scipy_ode, args.initial_conditions, t_values)[:,
+                         0]
         ax1.plot(t_values, scipy_solution, color='red', label='Scipy',
                  linestyle='--', zorder=0)
 
     methods = {method.__name__: method for method in
                ODESolverBase.__subclasses__()}
+
+    # Calc SciPy solution with different step sizes for error plot
+    step_sizes = np.linspace(0.001, 0.5, 1000)
+    scipy_solutions = {}
+    if args.error:
+        for step_size in step_sizes:
+            t_values = np.linspace(0, args.t_end, int(args.t_end / step_size))
+            scipy_solutions[step_size] = odeint(scipy_ode,
+                                                args.initial_conditions,
+                                                t_values)[:, 0]
 
     for method_name in args.methods:
         solver = methods[method_name](ode_eq, args.initial_conditions,
@@ -105,18 +116,42 @@ if __name__ == '__main__':
         solver.time_plot(ax1)
 
         if args.error:
-            # TODO: Implement error plot
-            pass
+            ax2 = axes[1] if amount_of_plots > 1 else axes
+            errors = []
+            for step_size in step_sizes:
+                solver = methods[method_name](ode_eq, args.initial_conditions,
+                                              step_size)
+                solver.solve(args.t_end)
+                errors.append(solver.get_mse(scipy_solutions[step_size]))
+            ax2.plot(step_sizes, errors, label=method_name)
 
         if args.cpu_time:
-            # TODO: Implement CPU time plot
-            pass
+            ax3 = axes[2] if amount_of_plots > 1 else axes
+            cpu_times = []
+            for step_size in step_sizes:
+                solver = methods[method_name](ode_eq, args.initial_conditions,
+                                              step_size)
+                result = timeit.timeit(lambda: solver.solve(args.t_end),
+                                        number=1)
+                cpu_times.append(result)
+            ax3.plot(step_sizes, cpu_times, label=method_name)
 
     ax1.set_title(
-        f'{args.ode} with initial conditions {args.initial_conditions}')
+        f'{args.ode} with initial conditions {args.initial_conditions} and step size {args.step_size}')
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Solution')
     ax1.legend()
+    if args.error:
+        ax2.set_title(f'Error vs Step Size')
+        ax2.set_xlabel('Step Size')
+        ax2.set_ylabel('Error')
+        ax2.legend()
+    if args.cpu_time:
+        ax3.set_title(f'CPU Time vs Step Size')
+        ax3.set_xlabel('Step Size')
+        ax3.set_ylabel('CPU Time')
+        ax3.legend()
+        ax3.set_yscale('log')
     if args.output:
         plt.savefig(args.output)
     else:
