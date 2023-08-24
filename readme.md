@@ -1,21 +1,17 @@
 # ODE Solver
 
-<hr>
-
 ## Description
 
 This project is a simple ODE solver using different numerical methods, like
 Forward Euler, Heun's Method, and Runge-Kutta 4. Furthermore, it is possible to
 compare multiple methods in terms of accuracy and speed.
-[![Example Plot](https://raw.githubusercontent.com/henribe01/ODE_Solver/img/plot.png)](https://raw.githubusercontent.com/henribe01/ODE_Solver/img/plot.png)
-<hr>
+[![Example Plot](https://github.com/henribe01/ODE_Solver/blob/Restructure/img/plot.png?raw=true)](https://github.com/henribe01/ODE_Solver/blob/Restructure/img/plot.png?raw=true)
 
 ## Goals
 
 The goal of this project is to implement different numerical methods for solving
 ODEs and due to that to get a better understanding of the methods and their
 advantages and disadvantages.
-<hr>
 
 ## Technologies Used
 
@@ -24,8 +20,6 @@ advantages and disadvantages.
 - Matplotlib (for the visualization of the results)
 - Scipy (for the comparison of the methods)
 - argparse (for the command line interface)
-
-<hr>
 
 ## Features
 
@@ -38,8 +32,6 @@ advantages and disadvantages.
 - Saving the plots
 - Using custom ODEs
 
-<hr>
-
 ## Installation
 
 To install the project, you need to have Python 3.11 installed. Then you can
@@ -50,8 +42,6 @@ git clone https://github.com/henribe01/ODE_Solver.git
 cd ODE_Solver
 pip install -r requirements.txt
 ```
-
-<hr>
 
 ## Usage
 
@@ -86,8 +76,6 @@ The function must take the form $f(x, x', ..., x^{(n-1)}, t)$ and return the
 value
 of $x^{(n)}$. Then you can use the command line interface to solve your ODE.
 
-<hr>
-
 ## Challenges and Solutions
 
 During the implementation of the project, I encountered a few challenges. One
@@ -103,7 +91,6 @@ by using the argparse module, which allows for a simple implementation of a
 command line interface. This way, the user can easily specify the ODE to solve,
 the initial conditions, the methods to use, the step size, and the time to
 solve up to.
-<hr>
 
 ## Results and Outcomes
 
@@ -117,7 +104,6 @@ for larger step sizes. The downside of this method is, that it significantly
 slower than the other methods. This is due to the fact, that the method
 calculates the derivatives at multiple points between the start and the end
 of the step.
-<hr>
 
 ## Sources
 
@@ -126,4 +112,3 @@ of the step.
 - [Wikipedia: Heun's Method](https://en.wikipedia.org/wiki/Heun%27s_method)
 - [Wikipedia: Adam-Bashforth Method](https://en.wikipedia.org/wiki/Linear_multistep_method#Adam%E2%80%93Bashforth_methods)
 - [Wikipedia: Euler Method](https://en.wikipedia.org/wiki/Euler_method) 
-<hr>
