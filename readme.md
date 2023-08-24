@@ -5,7 +5,7 @@
 This project is a simple ODE solver using different numerical methods, like
 Forward Euler, Heun's Method, and Runge-Kutta 4. Furthermore, it is possible to
 compare multiple methods in terms of accuracy and speed.
-[![Example Plot](https://github.com/henribe01/ODE_Solver/blob/Restructure/img/plot.png?raw=true)](https://github.com/henribe01/ODE_Solver/blob/Restructure/img/plot.png?raw=true)
+[![Example Plot](https://github.com/henribe01/ODE_Solver/blob/master/img/plot.png?raw=true)](https://github.com/henribe01/ODE_Solver/blob/master/img/plot.png?raw=true)
 
 ## Goals
 
