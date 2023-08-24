@@ -11,15 +11,6 @@ from scipy.integrate import odeint
 from ODESolver.ode_solver import *
 from importlib import import_module
 
-
-# Features program should have:
-# - Solve ODE and plot solution with one method and one step size
-# - Solve ODE and plot solution with multiple methods and one step size
-# - Plot Error vs step size for one method
-# - Plot Error vs step size for multiple methods
-# - Plot Time vs step size for one method
-# - Plot Time vs step size for multiple methods
-
 def scipy_ode(y: np.ndarray, t: float) -> np.ndarray:
     """
     Converts a high order ODE to a system of first order ODEs.
@@ -137,7 +128,7 @@ if __name__ == '__main__':
             ax3.plot(step_sizes, cpu_times, label=method_name)
 
     ax1.set_title(
-        f'{args.ode} with initial conditions {args.initial_conditions} and step size {args.step_size}')
+        f'{args.ode.replace("_", " ").title()} Solution vs Time')
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Solution')
     ax1.legend()
@@ -145,6 +136,7 @@ if __name__ == '__main__':
         ax2.set_title(f'Error vs Step Size')
         ax2.set_xlabel('Step Size')
         ax2.set_ylabel('Error')
+        ax2.set_yscale('log')
         ax2.legend()
     if args.cpu_time:
         ax3.set_title(f'CPU Time vs Step Size')
@@ -153,6 +145,6 @@ if __name__ == '__main__':
         ax3.legend()
         ax3.set_yscale('log')
     if args.output:
-        plt.savefig(args.output)
+        plt.savefig(args.output, dpi=300)
     else:
         plt.show()
