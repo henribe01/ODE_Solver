@@ -23,14 +23,16 @@ advantages and disadvantages.
 
 ## Features
 
-- Solving First Order ODEs
-- Solving Higher Order ODEs
-- Comparing the methods in terms of accuracy
-- Comparing the methods in terms of speed
-- Visualizing the results
-- Command Line Interface
-- Saving the plots
-- Using custom ODEs
+- [x] Solve ODEs using different methods
+- [x] Solving Higher Order ODEs
+- [x] Compare the methods in terms of accuracy
+- [x] Compare the methods in terms of speed
+- [x] Visualize the results
+- [x] Command line interface
+- [x] Saving plots to file
+- [x] Using custom ODEs
+- [ ] Solving systems of ODEs
+
 
 ## Installation
 
