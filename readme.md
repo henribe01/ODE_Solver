@@ -33,7 +33,6 @@ advantages and disadvantages.
 - [x] Using custom ODEs
 - [ ] Solving systems of ODEs
 
-
 ## Installation
 
 To install the project, you need to have Python 3.11 installed. Then you can
@@ -113,4 +112,5 @@ of the step.
 - [Wikipedia: Runge-Kutta Methods](https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods)
 - [Wikipedia: Heun's Method](https://en.wikipedia.org/wiki/Heun%27s_method)
 - [Wikipedia: Adam-Bashforth Method](https://en.wikipedia.org/wiki/Linear_multistep_method#Adam%E2%80%93Bashforth_methods)
-- [Wikipedia: Euler Method](https://en.wikipedia.org/wiki/Euler_method) 
+- [Wikipedia: Euler Method](https://en.wikipedia.org/wiki/Euler_method)
+- [Wikipedia: List of Runge-Kutta Methods](https://en.wikipedia.org/wiki/List_of_Runge%E2%80%93Kutta_methods)

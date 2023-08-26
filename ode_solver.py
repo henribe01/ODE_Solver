@@ -8,8 +8,28 @@ import argparse
 from matplotlib import pyplot as plt
 from scipy.integrate import odeint
 
-from ODESolver.ode_solver import *
+from ODESolver.base_classes import *
+from ODESolver.explicit_solvers import *
+from ODESolver.explicit_rk import *
+from ODESolver.adaptive_rk import *
+import inspect
+
 from importlib import import_module
+
+
+def get_all_methods():
+    # Get all BaseClasses
+    base_classes = inspect.getmembers(import_module('ODESolver.base_classes'),
+                                      inspect.isclass)
+    # Get all subclasses of ODESolverBase -> all methods
+    methods = dict()
+    for base_name, base_class in base_classes:
+        for method in base_class.__subclasses__():
+            method_name = method.__name__
+            if 'Base' not in method_name:
+                methods[method_name] = method
+    return methods
+
 
 def scipy_ode(y: np.ndarray, t: float) -> np.ndarray:
     """
@@ -41,10 +61,11 @@ def parse_args(argv):
     parser.add_argument('-m', '--methods', type=str, nargs='+',
                         default=['ForwardEuler', 'Heun', 'RK4'],
                         help='Methods to use for solving the ODE.',
-                        choices=[method.__name__ for method in
-                                 ODESolverBase.__subclasses__()])
+                        choices=get_all_methods().keys())
     parser.add_argument('-s', '--step_size', type=float, default=0.01,
                         help='Step size to use for solving the ODE.')
+    parser.add_argument('-a', '--all', action='store_true',
+                        help='Plot all methods in one plot.')
     parser.add_argument('-e', '--error', action='store_true',
                         help='Plot error vs step size.')
     parser.add_argument('-c', '--cpu_time', action='store_true',
@@ -80,15 +101,13 @@ if __name__ == '__main__':
     ax1 = axes[0] if amount_of_plots > 1 else axes
     fig.tight_layout(pad=3.0)
 
+    # Plot SciPy solution
     if args.scipy:
         t_values = np.linspace(0, args.t_end, int(args.t_end / args.step_size))
         scipy_solution = odeint(scipy_ode, args.initial_conditions, t_values)[:,
                          0]
         ax1.plot(t_values, scipy_solution, color='red', label='Scipy',
                  linestyle='--', zorder=0)
-
-    methods = {method.__name__: method for method in
-               ODESolverBase.__subclasses__()}
 
     # Calc SciPy solution with different step sizes for error plot
     step_sizes = np.linspace(0.001, 0.5, 1000)
@@ -99,13 +118,20 @@ if __name__ == '__main__':
             scipy_solutions[step_size] = odeint(scipy_ode,
                                                 args.initial_conditions,
                                                 t_values)[:, 0]
+    methods = get_all_methods()
+
+    # Set args.method to all methods if args.all is True
+    if args.all:
+        args.methods = list(methods.keys())
 
     for method_name in args.methods:
+        print(method_name)
         solver = methods[method_name](ode_eq, args.initial_conditions,
                                       args.step_size)
         solver.solve(args.t_end)
         solver.time_plot(ax1)
 
+        # Plot error
         if args.error:
             ax2 = axes[1] if amount_of_plots > 1 else axes
             errors = []
@@ -116,6 +142,7 @@ if __name__ == '__main__':
                 errors.append(solver.get_mse(scipy_solutions[step_size]))
             ax2.plot(step_sizes, errors, label=method_name)
 
+        # Plot CPU time
         if args.cpu_time:
             ax3 = axes[2] if amount_of_plots > 1 else axes
             cpu_times = []
@@ -123,10 +150,11 @@ if __name__ == '__main__':
                 solver = methods[method_name](ode_eq, args.initial_conditions,
                                               step_size)
                 result = timeit.timeit(lambda: solver.solve(args.t_end),
-                                        number=1)
+                                       number=1)
                 cpu_times.append(result)
             ax3.plot(step_sizes, cpu_times, label=method_name)
 
+    # Plot labels
     ax1.set_title(
         f'{args.ode.replace("_", " ").title()} Solution vs Time')
     ax1.set_xlabel('Time')
