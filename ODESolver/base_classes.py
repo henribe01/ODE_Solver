@@ -90,7 +90,7 @@ class ODESolverBase:
         :return: None
         """
         if label == '':
-            label = f'{self.__class__.__name__.capitalize()}'
+            label = f'{self.__class__.__name__}'
         line = ax.plot(self.get_t_values(), self.get_n_th_derivative(n),
                        color=self.color, label=label, alpha=0.5, zorder=1)[0]
 
