@@ -51,8 +51,6 @@ class ODESolverBase:
         :return:
         """
         # Append new derivative values to the array
-        # new_values = [2, 4]
-        # self.derivative_values = np.append(self.derivative_values, [new_values], axis=0)
         raise NotImplementedError
 
     def solve(self, t_end: float) -> None:
@@ -94,7 +92,7 @@ class ODESolverBase:
         if label == '':
             label = f'{self.__class__.__name__}'
         line = ax.plot(self.get_t_values(), self.get_n_th_derivative(n),
-                       color=self.color, label=label, alpha=0.5, zorder=1)[0]
+                       color=self.color, label=label, zorder=1)[0]
 
         # If step size is small, only plot the points with distance
         interval = 1
@@ -103,24 +101,9 @@ class ODESolverBase:
             interval = int(distance / self.step_size)
         scatter = ax.scatter(self.get_t_values()[::interval],
                              self.get_n_th_derivative(n)[::interval],
-                             color=self.color, alpha=0.5, s=10, marker='s')
+                             color=self.color, s=10, marker='s')
         return line, scatter
 
-    def phase_plot(self, ax: plt.Axes, n: int = 0, color: str = 'k',
-                   label: str = '') -> plt.Line2D:
-        """
-        Plots the n-th derivative against the (n+1)-th derivative.
-        :param ax: A matplotlib axes object to plot on.
-        :param n: The order of the derivative to plot.
-        :param color: The color of the line.
-        :param label: The label of the line.
-        :return: None
-        """
-        if label == '':
-            label = f'd^{n}x/dt^{n} vs d^{n + 1}x/dt^{n + 1}'
-        return ax.plot(self.get_n_th_derivative(n),
-                       self.get_n_th_derivative(n + 1), color=color,
-                       label=label)[0]
 
     def get_mse(self) -> float:
         """
