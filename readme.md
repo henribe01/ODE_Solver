@@ -33,6 +33,14 @@ advantages and disadvantages.
 - [x] Using custom ODEs
 - [ ] Solving systems of ODEs
 
+### Implemented Methods
+- [x] Forward Euler
+- [x] Heun's Method
+- [x] Runge-Kutta 4
+- [x] Two-Step Adams-Bashforth
+- [x] Adaptive Euler Heun
+- [x] Adaptive Runge-Kutta 4 5
+
 ## Installation
 
 To install the project, you need to have Python 3.11 installed. Then you can
@@ -47,7 +55,9 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-usage: ODE Solver [-h] -i INITIAL_CONDITIONS [INITIAL_CONDITIONS ...] [-t T_END] [-m {ForwardEuler,Heun,RK4,TwoStepAdamBashforth} [{ForwardEuler,Heun,RK4,TwoStepAdamBashforth} ...]] [-s STEP_SIZE] [-e] [-c] [-o OUTPUT] [-sc] {simple_pendulum}
+usage: ODE Solver [-h] -i INITIAL_CONDITIONS [INITIAL_CONDITIONS ...] [-t T_END]
+                  [-m {AdaptiveRK45,AdaptiveHeunEuler,ForwardEuler,Heun,TwoStepAdamBashforth,RK4} [{AdaptiveRK45,AdaptiveHeunEuler,ForwardEuler,Heun,TwoStepAdamBashforth,RK4} ...]] [-s STEP_SIZE] [-a] [-e] [-c] [-o OUTPUT] [-sc]
+                  {simple_pendulum}
 
 Solve ODEs using different methods andcompare them
 
@@ -60,15 +70,18 @@ options:
                         Initial conditions for the ODE. Must be the same length as the order of the ODE.
   -t T_END, --t_end T_END
                         Time to solve up to.
-  -m {ForwardEuler,Heun,RK4,TwoStepAdamBashforth} [{ForwardEuler,Heun,RK4,TwoStepAdamBashforth} ...], --methods {ForwardEuler,Heun,RK4,TwoStepAdamBashforth} [{ForwardEuler,Heun,RK4,TwoStepAdamBashforth} ...]
+  -m {AdaptiveRK45,AdaptiveHeunEuler,ForwardEuler,Heun,TwoStepAdamBashforth,RK4} [{AdaptiveRK45,AdaptiveHeunEuler,ForwardEuler,Heun,TwoStepAdamBashforth,RK4} ...], --methods {AdaptiveRK45,AdaptiveHeunEuler,ForwardEuler,Heun,TwoStepAdamBashforth
+,RK4} [{AdaptiveRK45,AdaptiveHeunEuler,ForwardEuler,Heun,TwoStepAdamBashforth,RK4} ...]
                         Methods to use for solving the ODE.
   -s STEP_SIZE, --step_size STEP_SIZE
                         Step size to use for solving the ODE.
+  -a, --all             Plot all methods in one plot.
   -e, --error           Plot error vs step size.
-  -c, --cpu_time        Plot CPU time vs step size.
+  -c, --cpu_time        Measure CPU time vs step size.
   -o OUTPUT, --output OUTPUT
                         Output file name. If not specified, will show plot.
   -sc, --scipy          Use scipy's odeint method to solve the ODE as well.
+
 ```
 
 If you want to solve your own ODE, you need to create a file in the ODEs folder
@@ -114,3 +127,4 @@ of the step.
 - [Wikipedia: Adam-Bashforth Method](https://en.wikipedia.org/wiki/Linear_multistep_method#Adam%E2%80%93Bashforth_methods)
 - [Wikipedia: Euler Method](https://en.wikipedia.org/wiki/Euler_method)
 - [Wikipedia: List of Runge-Kutta Methods](https://en.wikipedia.org/wiki/List_of_Runge%E2%80%93Kutta_methods)
+- [Fundamentals of Numerical Computation: Adaptive Runge-Kutta Methods](https://fncbook.github.io/fnc/ivp/adaptive.html)

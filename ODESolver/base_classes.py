@@ -3,6 +3,7 @@ from typing import Callable
 import matplotlib
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.integrate import solve_ivp, odeint
 
 plt.style.use('seaborn-v0_8')
 
@@ -60,6 +61,7 @@ class ODESolverBase:
         :param t_end: The time to solve up to.
         :return: None
         """
+        # Account for floating point errors
         while self.t_values[-1] < t_end:
             self.step()
 
@@ -120,20 +122,30 @@ class ODESolverBase:
                        self.get_n_th_derivative(n + 1), color=color,
                        label=label)[0]
 
-    def get_mse(self, scipy_solution: np.ndarray) -> float:
+    def get_mse(self) -> float:
         """
         Calculates the mean squared error between the calculated solution and a scipy solution.
         :param scipy_solution: The scipy solution.
         :return: The mean squared error.
         """
-        # Get shortest
-        if len(self.t_values) > len(scipy_solution):
-            length = len(scipy_solution)
-        else:
-            length = len(self.t_values)
-        return 1 / length * np.sum(
+        # Calculate the scipy solution
+        scipy_solution = odeint(self.f, self.initial_values, self.t_values)[:, 0]
+
+        length = len(self.t_values)
+        return np.sum(
             (self.get_n_th_derivative(0)[:length] - scipy_solution[
-                                                    :length]) ** 2)
+                                                    :length]) ** 2) / length
+
+    def get_max_error(self, scipy_solution: np.ndarray) -> float:
+        """
+        Calculates the maximum error between the calculated solution and a scipy solution.
+        :param scipy_solution: The scipy solution.
+        :return: The maximum error.
+        """
+        length = len(self.t_values)
+        return np.max(
+            np.abs(self.get_n_th_derivative(0)[:length] - scipy_solution[
+                                                          :length]))
 
 
 class RKBase(ODESolverBase):
@@ -195,11 +207,10 @@ class RKBase(ODESolverBase):
 
 class AdaptiveRKBase(RKBase):
     def __init__(self, equation: Callable[[..., float], float],
-                 initial_values: list[float], step_size: float, stages: int,
+                 initial_values: list[float], step_size: float, p: int,
                  runge_kutta_matrix: np.ndarray, weights: np.ndarray,
                  weights2: np.ndarray,
-                 nodes: np.ndarray, lower_tolerance: float,
-                 upper_tolerance: float) -> None:
+                 nodes: np.ndarray, tolerance: float = 1e-3) -> None:
         """
         For a list of Runge-Kutta methods, see: \n
         https://en.wikipedia.org/wiki/List_of_Runge%E2%80%93Kutta_methods#Embedded_methods
@@ -209,7 +220,7 @@ class AdaptiveRKBase(RKBase):
         :param initial_values: A list of the initial values of the ODE. \n
         Must be of length n. \n
         :param step_size: The step size of the solver.
-        :param stages: The number of stages of the Runge-Kutta method.
+        :param p: The order of the method.
         :param runge_kutta_matrix: The Runge-Kutta matrix. \n
         Must be of shape (stages, stages).
         :param weights: The weights of the Runge-Kutta method. \n
@@ -219,16 +230,15 @@ class AdaptiveRKBase(RKBase):
         Must be of length stages - 1.
         :param nodes: The nodes of the Runge-Kutta method. \n
         Must be of length stages.
-        :param lower_tolerance: When the error is below this value, the step
-        size is increased.
-        :param upper_tolerance: When the error is above this value, the step
-        size is decreased.
+        :param tolerance: If the error is below this value, the step is
+        accepted. \n
         """
         self.weights2 = weights2
-        self.lower_tolerance = lower_tolerance
-        self.upper_tolerance = upper_tolerance
-        super().__init__(equation, initial_values, step_size, stages,
+        self.tolerance = tolerance
+        self.p = p
+        super().__init__(equation, initial_values, step_size, p,
                          runge_kutta_matrix, weights, nodes)
+        self.original_step_size = step_size
 
     def step(self) -> None:
         """
@@ -238,29 +248,37 @@ class AdaptiveRKBase(RKBase):
         # Calculate k-values
         k_values = np.zeros((self.runge_kutta_matrix.shape[0],
                              self.derivative_values.shape[1]))
-        for i in range(self.runge_kutta_matrix.shape[0]):
-            k_values[i] = self.f(self.derivative_values[-1] +
-                                 self.step_size * np.sum(
-                self.runge_kutta_matrix[i] * k_values, axis=0),
+        for i in range(self.stages):
+            # Calculate k_i
+            k_values[i] = self.f(self.derivative_values[-1] + self.step_size *
+                                 np.dot(self.runge_kutta_matrix[i, :i],
+                                        k_values[:i]),
                                  self.t_values[-1] + self.step_size *
                                  self.nodes[i])
 
-        # Calculate new values
-        new_values = self.derivative_values[-1] + self.step_size * np.sum(
-            self.weights * k_values, axis=0)
+        # Calculate values with order p
+        values_p = self.derivative_values[-1] + self.step_size * \
+                   np.dot(self.weights, k_values)
+
+        # Calculate values with order p - 1
+        values_p1 = self.derivative_values[-1] + self.step_size * \
+                    np.dot(self.weights2, k_values)
 
         # Calculate error
-        error = self.step_size * np.sum((self.weights - self.weights2) *
-                                        k_values, axis=0)
+        error = np.linalg.norm(values_p - values_p1)
 
-        # Check if error is within tolerance
-        if np.all(np.abs(error) < self.lower_tolerance):
-            self.step_size *= 2
-        elif np.any(np.abs(error) > self.upper_tolerance):
-            self.step_size /= 2
+        # Calculate new step size
+        new_step_size = 0.9 * self.step_size * (self.tolerance / error) ** (
+                1 / self.p)
 
-        # Append new values
-        self.derivative_values = np.append(self.derivative_values,
-                                           [new_values], axis=0)
-        self.t_values = np.append(self.t_values, self.t_values[-1] +
-                                  self.step_size)
+        # If error is below tolerance, accept step
+        if error < self.tolerance:
+            # Append new values to the array
+            self.derivative_values = np.append(self.derivative_values,
+                                               [values_p], axis=0)
+            self.t_values = np.append(self.t_values, self.t_values[-1] +
+                                      self.step_size)
+            self.step_size = new_step_size
+        else:
+            # Reject step
+            self.step_size = new_step_size

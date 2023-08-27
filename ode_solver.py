@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import timeit
 
 import numpy as np
@@ -69,7 +70,7 @@ def parse_args(argv):
     parser.add_argument('-e', '--error', action='store_true',
                         help='Plot error vs step size.')
     parser.add_argument('-c', '--cpu_time', action='store_true',
-                        help='Plot CPU time vs step size.')
+                        help='Measure CPU time vs step size.')
     parser.add_argument('-o', '--output', type=str,
                         help='Output file name. If not '
                              'specified, will show plot.')
@@ -100,8 +101,9 @@ def setup_plots(args):
         error_ax.set_title(f'Error vs Step Size')
         error_ax.set_xlabel('Step Size')
         error_ax.set_ylabel('Error')
-        error_ax.grid(True)
+        error_ax.grid(True, which='both')
         error_ax.set_yscale('log')
+        error_ax.set_xscale('log')
 
     # CPU Time Plot Settings
     if args.cpu_time:
@@ -109,7 +111,7 @@ def setup_plots(args):
         cpu_ax.set_title(f'CPU Time vs Step Size')
         cpu_ax.set_xlabel('Step Size')
         cpu_ax.set_ylabel('CPU Time')
-        cpu_ax.grid(True)
+        cpu_ax.grid(True, which='both')
         cpu_ax.set_yscale('log')
 
     return fig, axs
@@ -135,22 +137,12 @@ if __name__ == '__main__':
     # Set up plots
     fig, axs = setup_plots(args)
 
-    # Solve ODE with Scipy
+    # Solve ODE with Scipy if args.scipy
     if args.scipy:
         t_values = np.linspace(0, args.t_end, 1000)
         scipy_sol = odeint(scipy_ode, args.initial_conditions, t_values)[:, 0]
         axs[0].plot(t_values, scipy_sol, label='Scipy', color='red',
                     linestyle='--', zorder=0)
-
-    # Calc Scipy solution with different step sizes for error plot
-    if args.error:
-        step_sizes = np.linspace(0.001, 0.5, 1000)
-        scipy_solutions = {}
-        for step_size in step_sizes:
-            t_values = np.linspace(0, args.t_end, int(args.t_end / step_size))
-            scipy_solutions[step_size] = odeint(scipy_ode,
-                                                args.initial_conditions,
-                                                t_values)[:, 0]
 
     # Set args.methods to all methods if args.all is True
     if args.all:
@@ -166,36 +158,35 @@ if __name__ == '__main__':
         solver.solve(args.t_end)
         solver.time_plot(axs[0])
 
-        # Plot error vs step size
+        # Plot error if args.error is True
         if args.error:
-            errors = []
-            cpu_times = []
-            for step_size in step_sizes:
+            errors = np.array([])
+            for step_size in np.logspace(-3, -1, 100):
                 solver = available_methods[method](ode_eq,
                                                    args.initial_conditions,
                                                    step_size)
-                solver.solve(args.t_end)
-                errors.append(solver.get_mse(scipy_solutions[step_size]))
-            axs[1].plot(step_sizes, errors, label=method)
+                # To save time, when args.error is True, only solve up to t=1
+                solver.solve(1)
+                errors = np.append(errors, solver.get_mse())
+            axs[1].plot(np.logspace(-3, -1, 100), errors, label=method)
 
-        # Plot CPU time vs step size
         if args.cpu_time:
-            cpu_times = []
-            for step_size in step_sizes:
+            cpu_times = np.array([])
+            for step_size in np.logspace(-3, -1, 100):
                 solver = available_methods[method](ode_eq,
                                                    args.initial_conditions,
                                                    step_size)
-                result = timeit.timeit(lambda: solver.solve(args.t_end),
-                                       number=1)
-                cpu_times.append(result)
-            axs[1 + args.error].plot(step_sizes, cpu_times, label=method)
+                # To save time, when args.cpu_time is True, only solve up to t=1
+                result = timeit.timeit(lambda: solver.solve(1), number=1)
+                cpu_times = np.append(cpu_times, result)
+            axs[1 + args.error].plot(np.logspace(-3, -1, 100), cpu_times,
+                                     label=method)
 
-    # Add legend
-    axs[0].legend()
-    if args.error:
-        axs[1].legend()
-    if args.cpu_time:
-        axs[1 + args.error].legend()
+    # Add legend and set the symbols to not be transparent
+    leg = axs[0].legend(loc='best', ncol=(len(args.methods) + args.scipy) // 2,
+                        fancybox=True, fontsize='small')
+    for lh in leg.legendHandles:
+        lh.set_alpha(1)
 
     # Save or show plot
     if args.output:
