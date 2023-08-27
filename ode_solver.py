@@ -185,11 +185,11 @@ if __name__ == '__main__':
     # Add legend and set the symbols to not be transparent
     leg = axs[0].legend(loc='best', ncol=(len(args.methods) + args.scipy) // 2,
                         fancybox=True, fontsize='small')
-    for lh in leg.legendHandles:
+    for lh in leg.legend_handles:
         lh.set_alpha(1)
 
     # Save or show plot
     if args.output:
-        fig.savefig(args.output)
+        fig.savefig(args.output, dpi=300)
     else:
         plt.show()
