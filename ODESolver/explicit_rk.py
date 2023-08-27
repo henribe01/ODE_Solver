@@ -4,6 +4,41 @@ import numpy as np
 
 from .base_classes import RKBase
 
+
+class Midpoint(RKBase):
+    def __init__(self, equation: Callable[[..., float], float],
+                 initial_values: list[float], step_size: float) -> None:
+        runge_kutta_matrix = np.array([[0, 0],
+                                       [1 / 2, 0]])
+        weights = np.array([0, 1])
+        nodes = np.array([0, 1 / 2])
+        super().__init__(equation, initial_values, step_size, 2,
+                         runge_kutta_matrix, weights, nodes)
+
+class RK3(RKBase):
+    def __init__(self, equation: Callable[[..., float], float],
+                 initial_values: list[float], step_size: float) -> None:
+        runge_kutta_matrix = np.array([[0, 0, 0],
+                                       [1 / 2, 0, 0],
+                                       [-1, 2, 0]])
+        weights = np.array([1 / 6, 2 / 3, 1 / 6])
+        nodes = np.array([0, 1 / 2, 1])
+        super().__init__(equation, initial_values, step_size, 3,
+                            runge_kutta_matrix, weights, nodes)
+
+
+class SSPRK3(RKBase):
+    def __init__(self, equation: Callable[[..., float], float],
+                 initial_values: list[float], step_size: float) -> None:
+        runge_kutta_matrix = np.array([[0, 0, 0],
+                                       [1, 0, 0],
+                                       [1 / 4, 1 / 4, 0]])
+        weights = np.array([1 / 6, 1 / 6, 2 / 3])
+        nodes = np.array([0, 1, 1 / 2])
+        super().__init__(equation, initial_values, step_size, 3,
+                            runge_kutta_matrix, weights, nodes)
+
+
 class RK4(RKBase):
     def __init__(self, equation: Callable[[..., float], float],
                  initial_values: list[float], step_size: float) -> None:
