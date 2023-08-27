@@ -34,12 +34,20 @@ advantages and disadvantages.
 - [ ] Solving systems of ODEs
 
 ### Implemented Methods
-- [x] Forward Euler
-- [x] Heun's Method
-- [x] Runge-Kutta 4
-- [x] Two-Step Adams-Bashforth
-- [x] Adaptive Euler Heun
-- [x] Adaptive Runge-Kutta 4 5
+- Explict Methods
+    - [x] Forward Euler
+    - [x] Heun's Method
+    - [x] Two-Step Adams-Bashforth
+- Explicit Runge-Kutta Methods
+    - [x] Midpoint Method
+    - [x] Runge-Kutta 3
+    - [x] Runge-Kutta 4
+    - [x] Third-Order Strong Stability Preserving Runge-Kutta
+- Adaptive Runge-Kutta Methods
+    - [x] Adaptive Heun-Euler
+    - [x] Adaptive Runge-Kutta 4/5
+    - [x] Adaptive Fehlberg 1(2)
+    - [x] Adaptive Dormand-Prince
 
 ## Installation
 
